@@ -264,7 +264,7 @@ MIT License - See LICENSE file
 ## Credits
 
 Lead Developer: Agent Mackenzie 🔍  
-Built for: SOC Analyst Portfolio (Raphael - Britmates)
+Built for: SOC Analyst Portfolio 
 
 Special thanks to:
 - TruffleHog (architecture inspiration)
