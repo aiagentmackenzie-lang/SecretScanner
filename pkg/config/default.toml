@@ -1,0 +1,510 @@
+# SecretScanner Default Configuration
+# Compatible with .gitleaks.toml format
+
+title = "SecretScanner Default Rules"
+
+[extend]
+useDefault = true
+
+# Global allowlist
+[[allowlist]]
+description = "Global exclusions"
+paths = [
+    '''vendor/''',
+    '''node_modules/''',
+    '''\.gitleaks\.toml$''',
+    '''\.gitleaks\.toml$''',
+    '''(.*?)(\.jpg|\.jpeg|\.png|\.gif|\.pdf|\.doc|\.docx|\.bin|\.exe)$''',
+    '''\.git/''',
+]
+regexes = [
+    '''AKIAIOSFODNN7EXAMPLE''',
+    '''ASIAIOSFODNN7EXAMPLE''',
+    '''AROAIOSFODNN7EXAMPLE''',
+    '''A3TAIOSFDODNN7EXAMPLE''',
+    '''.*EXAMPLE.*''',
+    '''.*example.*''',
+    '''.*test.*''',
+]
+stopwords = [
+    "example",
+    "test",
+    "fake",
+    "dummy",
+    "sample",
+    "placeholder",
+]
+
+# AWS Rules
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key ID"
+regex = '''\b((?:A3T[A-Z0-9]|AKIA|ASIA|ABIA|ACCA)[A-Z2-7]{16})\b'''
+entropy = 3.0
+keywords = ["A3T", "AKIA", "ASIA", "ABIA", "ACCA"]
+severity = "critical"
+tags = ["aws", "cloud", "access-key"]
+
+[[rules.allowlist]]
+description = "AWS example keys"
+regexes = ['''.+EXAMPLE$''']
+
+[[rules]]
+id = "aws-secret-key"
+description = "AWS Secret Access Key"
+regex = '''\b([A-Za-z0-9/+=]{40})\b'''
+entropy = 4.5
+keywords = []
+severity = "critical"
+tags = ["aws", "cloud", "secret-key"]
+
+[[rules]]
+id = "aws-mws-key"
+description = "AWS MWS Key"
+regex = '''\bmzn\.mws\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b'''
+keywords = ["mzn.mws"]
+severity = "high"
+tags = ["aws", "marketplace", "mws"]
+
+# GitHub Rules
+[[rules]]
+id = "github-pat"
+description = "GitHub Personal Access Token"
+regex = '''ghp_[0-9a-zA-Z]{36}'''
+entropy = 3.5
+keywords = ["ghp_"]
+severity = "high"
+tags = ["github", "pat", "token"]
+
+[[rules]]
+id = "github-fine-grained-pat"
+description = "GitHub Fine-Grained PAT"
+regex = '''github_pat_[0-9a-zA-Z_]{22}_[0-9a-zA-Z_]{59}'''
+entropy = 4.0
+keywords = ["github_pat_"]
+severity = "high"
+tags = ["github", "pat", "token"]
+
+[[rules]]
+id = "github-oauth"
+description = "GitHub OAuth Token"
+regex = '''gho_[0-9a-zA-Z]{36}'''
+entropy = 3.5
+keywords = ["gho_"]
+severity = "high"
+tags = ["github", "oauth", "token"]
+
+[[rules]]
+id = "github-app-token"
+description = "GitHub App Token"
+regex = '''ghs_[0-9a-zA-Z]{36}'''
+entropy = 3.5
+keywords = ["ghs_"]
+severity = "high"
+tags = ["github", "app", "token"]
+
+[[rules]]
+id = "github-refresh-token"
+description = "GitHub Refresh Token"
+regex = '''ghr_[0-9a-zA-Z]{36}'''
+entropy = 3.5
+keywords = ["ghr_"]
+severity = "high"
+tags = ["github", "refresh", "token"]
+
+# Slack Rules
+[[rules]]
+id = "slack-bot-token"
+description = "Slack Bot Token"
+regex = '''xoxb-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24}'''
+entropy = 3.5
+keywords = ["xoxb-"]
+severity = "high"
+tags = ["slack", "bot", "token"]
+
+[[rules]]
+id = "slack-user-token"
+description = "Slack User Token"
+regex = '''xoxp-[0-9]{10,13}-[0-9]{10,13}-[0-9a-zA-Z]{24}'''
+entropy = 3.5
+keywords = ["xoxp-"]
+severity = "high"
+tags = ["slack", "user", "token"]
+
+[[rules]]
+id = "slack-webhook"
+description = "Slack Webhook"
+regex = '''https://hooks\.slack\.com/services/T[A-Z0-9]{8}/B[A-Z0-9]{8,10}/[a-zA-Z0-9_]{24}'''
+keywords = ["hooks.slack.com"]
+severity = "high"
+tags = ["slack", "webhook"]
+
+# Discord Rules
+[[rules]]
+id = "discord-bot-token"
+description = "Discord Bot Token"
+regex = '''[MN][A-Za-z0-9]{23}\.[A-Za-z0-9-_]{6}\.[A-Za-z0-9-_]{27}'''
+entropy = 4.0
+keywords = []
+severity = "high"
+tags = ["discord", "bot", "token"]
+
+# Stripe Rules
+[[rules]]
+id = "stripe-live-secret"
+description = "Stripe Live Secret Key"
+regex = '''sk_live_[0-9a-zA-Z]{24,34}'''
+entropy = 3.5
+keywords = ["sk_live_"]
+severity = "critical"
+tags = ["stripe", "secret", "live"]
+
+[[rules]]
+id = "stripe-test-secret"
+description = "Stripe Test Secret Key"
+regex = '''sk_test_[0-9a-zA-Z]{24,34}'''
+entropy = 3.5
+keywords = ["sk_test_"]
+severity = "medium"
+tags = ["stripe", "secret", "test"]
+
+[[rules]]
+id = "stripe-restricted-live"
+description = "Stripe Live Restricted Key"
+regex = '''rk_live_[0-9a-zA-Z]{24,34}'''
+entropy = 3.5
+keywords = ["rk_live_"]
+severity = "critical"
+tags = ["stripe", "restricted", "live"]
+
+# Private Keys
+[[rules]]
+id = "rsa-private-key"
+description = "RSA Private Key"
+regex = '''-----BEGIN RSA PRIVATE KEY-----'''
+keywords = ["-----BEGIN RSA PRIVATE KEY-----"]
+severity = "critical"
+tags = ["rsa", "private-key", "crypto"]
+
+[[rules]]
+id = "ec-private-key"
+description = "EC Private Key"
+regex = '''-----BEGIN EC PRIVATE KEY-----'''
+keywords = ["-----BEGIN EC PRIVATE KEY-----"]
+severity = "critical"
+tags = ["ec", "private-key", "crypto"]
+
+[[rules]]
+id = "openssh-private-key"
+description = "OpenSSH Private Key"
+regex = '''-----BEGIN OPENSSH PRIVATE KEY-----'''
+keywords = ["-----BEGIN OPENSSH PRIVATE KEY-----"]
+severity = "critical"
+tags = ["openssh", "private-key", "crypto"]
+
+[[rules]]
+id = "pgp-private-key"
+description = "PGP Private Key"
+regex = '''-----BEGIN PGP PRIVATE KEY BLOCK-----'''
+keywords = ["-----BEGIN PGP PRIVATE KEY BLOCK-----"]
+severity = "critical"
+tags = ["pgp", "private-key", "crypto"]
+
+[[rules]]
+id = "generic-private-key"
+description = "Generic Private Key"
+regex = '''-----BEGIN .* PRIVATE KEY.*-----'''
+keywords = ["-----BEGIN", "PRIVATE KEY-----"]
+severity = "critical"
+tags = ["private-key", "crypto"]
+
+# GCP Rules
+[[rules]]
+id = "gcp-api-key"
+description = "Google API Key"
+regex = '''AIza[0-9A-Za-z_-]{35}'''
+entropy = 3.5
+keywords = ["AIza"]
+severity = "high"
+tags = ["gcp", "google", "api-key"]
+
+# Azure Rules
+[[rules]]
+id = "azure-storage-key"
+description = "Azure Storage Account Key"
+regex = '''DefaultEndpointsProtocol=https;AccountName=[^;]+;AccountKey=[A-Za-z0-9+/=]{86}=='''
+keywords = ["DefaultEndpointsProtocol", "AccountKey"]
+severity = "high"
+tags = ["azure", "storage", "key"]
+
+# JWT
+[[rules]]
+id = "jwt-token"
+description = "JSON Web Token"
+regex = '''eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*'''
+entropy = 4.0
+keywords = ["eyJ"]
+severity = "medium"
+tags = ["jwt", "token"]
+
+# Generic API Key / Secret Patterns
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(?:api[_-]?key|apikey|key)[\s]*[=:]+[\s]*["\']?[a-zA-Z0-9]{32,}["\']?'''
+entropy = 4.0
+keywords = ["api_key", "api-key", "apikey", "key"]
+severity = "medium"
+tags = ["api", "key", "generic"]
+
+[[rules]]
+id = "generic-secret"
+description = "Generic Secret"
+regex = '''(?i)(?:secret|password|passwd|pwd)[\s]*[=:]+[\s]*["\']?[a-zA-Z0-9/+=_!@#$%^&*]{8,}["\']?'''
+entropy = 3.5
+keywords = ["secret", "password", "passwd", "pwd"]
+severity = "medium"
+tags = ["secret", "password", "generic"]
+
+[[rules]]
+id = "database-connection"
+description = "Database Connection String"
+regex = '''(?i)(mongodb(\+srv)?|postgres(ql)?|mysql|redis|amqp)://[^:]+:[^@]+@'''
+keywords = ["mongodb://", "postgres://", "mysql://", "redis://"]
+severity = "high"
+tags = ["database", "connection", "string"]
+
+# Phase 2 Extended Rules (24 added to reach 50 total)
+
+# Twilio
+[[rules]]
+id = "twilio-api-key"
+description = "Twilio API Key"
+regex = '''SK[a-f0-9]{32}'''
+entropy = 3.5
+keywords = ["SK"]
+severity = "high"
+tags = ["twilio", "api", "key"]
+
+[[rules]]
+id = "twilio-account-sid"
+description = "Twilio Account SID"
+regex = '''AC[a-f0-9]{32}'''
+entropy = 3.5
+keywords = ["AC"]
+severity = "high"
+tags = ["twilio", "account", "sid"]
+
+# HashiCorp Vault
+[[rules]]
+id = "vault-token"
+description = "HashiCorp Vault Token"
+regex = '''[sb]\.[A-Za-z0-9]{24}'''
+entropy = 4.0
+keywords = ["s.", "b."]
+severity = "critical"
+tags = ["vault", "hashicorp", "token"]
+
+# Telegram Bot
+[[rules]]
+id = "telegram-bot-token"
+description = "Telegram Bot Token"
+regex = '''[0-9]{8,10}:[a-zA-Z0-9_-]{35}'''
+entropy = 4.0
+keywords = [":AA"]
+severity = "high"
+tags = ["telegram", "bot", "token"]
+
+# SendGrid
+[[rules]]
+id = "sendgrid-api-key"
+description = "SendGrid API Key"
+regex = '''SG\.[a-zA-Z0-9_-]{22}\.[a-zA-Z0-9_-]{43}'''
+entropy = 4.0
+keywords = ["SG."]
+severity = "high"
+tags = ["sendgrid", "api", "key"]
+
+# Mailgun
+[[rules]]
+id = "mailgun-api-key"
+description = "Mailgun API Key"
+regex = '''key-[0-9a-f]{32}'''
+entropy = 3.5
+keywords = ["key-"]
+severity = "high"
+tags = ["mailgun", "api", "key"]
+
+# Mailchimp
+[[rules]]
+id = "mailchimp-api-key"
+description = "Mailchimp API Key"
+regex = '''[0-9a-f]{32}-us[0-9]{1,2}'''
+entropy = 3.5
+keywords = ["-us"]
+severity = "high"
+tags = ["mailchimp", "api", "key"]
+
+# OpenAI
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-(proj|live|test)-[a-zA-Z0-9]{48}'''
+entropy = 4.0
+keywords = ["sk-"]
+severity = "critical"
+tags = ["openai", "api", "key", "ai"]
+
+[[rules]]
+id = "anthropic-api-key"
+description = "Anthropic / Claude API Key"
+regex = '''sk-ant-api-[0-9a-z_-]{40,}'''
+entropy = 4.0
+keywords = ["sk-ant-api-"]
+severity = "critical"
+tags = ["anthropic", "claude", "api", "key", "ai"]
+
+# GitLab
+[[rules]]
+id = "gitlab-pat"
+description = "GitLab Personal Access Token"
+regex = '''glpat-[0-9a-zA-Z_-]{20}'''
+entropy = 4.0
+keywords = ["glpat-"]
+severity = "high"
+tags = ["gitlab", "pat", "token"]
+
+[[rules]]
+id = "gitlab-runner-token"
+description = "GitLab Runner Registration Token"
+regex = '''GR1348941[0-9a-zA-Z_-]{20}'''
+entropy = 4.0
+keywords = ["GR1348941"]
+severity = "critical"
+tags = ["gitlab", "runner", "token"]
+
+# Pulumi
+[[rules]]
+id = "pulumi-access-token"
+description = "Pulumi Access Token"
+regex = '''pul-[a-f0-9]{40}'''
+entropy = 4.0
+keywords = ["pul-"]
+severity = "high"
+tags = ["pulumi", "access", "token"]
+
+# NPM
+[[rules]]
+id = "npm-auth-token"
+description = "NPM Authentication Token"
+regex = '''npm_[A-Za-z0-9]{36}'''
+entropy = 4.0
+keywords = ["npm_"]
+severity = "medium"
+tags = ["npm", "auth", "token"]
+
+# Docker
+[[rules]]
+id = "dockerhub-token"
+description = "Docker Hub Access Token"
+regex = '''dckr_pat_[A-Za-z0-9]{22}[A-Za-z0-9_-]{10}'''
+entropy = 4.0
+keywords = ["dckr_pat_"]
+severity = "medium"
+tags = ["docker", "dockerhub", "token"]
+
+[[rules]]
+id = "docker-swarm-token"
+description = "Docker Swarm Join Token"
+regex = '''SWMTKN-1-[0-9a-z]{16,25}-[0-9a-z]{16,25}'''
+entropy = 4.0
+keywords = ["SWMTKN"]
+severity = "critical"
+tags = ["docker", "swarm", "token"]
+
+# Kubernetes
+[[rules]]
+id = "kubeconfig-client-certificate"
+description = "Kubernetes Client Certificate Data"
+regex = '''client-certificate-data:\s*[A-Za-z0-9+/=]{100,}'''
+keywords = ["client-certificate-data"]
+severity = "high"
+tags = ["kubernetes", "kubeconfig", "cert"]
+
+[[rules]]
+id = "kubeconfig-client-key"
+description = "Kubernetes Client Key Data"
+regex = '''client-key-data:\s*[A-Za-z0-9+/=]{100,}'''
+keywords = ["client-key-data"]
+severity = "critical"
+tags = ["kubernetes", "kubeconfig", "key"]
+
+# AWS Extended
+[[rules]]
+id = "aws-appsync-api-key"
+description = "AWS AppSync API Key"
+regex = '''da2-[a-z0-9]{26}'''
+entropy = 3.5
+keywords = ["da2-"]
+severity = "high"
+tags = ["aws", "appsync", "api", "key"]
+
+# Heroku
+[[rules]]
+id = "heroku-api-key"
+description = "Heroku API Key"
+regex = '''[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}'''
+entropy = 3.5
+keywords = ["heroku", "HEROKU_API_KEY"]
+severity = "high"
+tags = ["heroku", "api", "key"]
+
+# Cloudflare
+[[rules]]
+id = "cloudflare-api-key"
+description = "Cloudflare API Key"
+regex = '''[0-9a-f]{37}'''
+entropy = 4.5
+keywords = ["cloudflare"]
+severity = "high"
+tags = ["cloudflare", "api", "key"]
+
+# Sentry
+[[rules]]
+id = "sentry-auth-token"
+description = "Sentry Auth Token"
+regex = '''[0-9a-f]{64}'''
+entropy = 4.0
+keywords = ["sentry", "SENTRY_AUTH_TOKEN"]
+severity = "high"
+tags = ["sentry", "auth", "token"]
+
+# Segment
+[[rules]]
+id = "segment-write-key"
+description = "Segment Write Key"
+regex = '''[0-9a-zA-Z]{32}'''
+entropy = 4.0
+keywords = ["segment", "writeKey"]
+severity = "medium"
+tags = ["segment", "write", "key"]
+
+# New Relic
+[[rules]]
+id = "newrelic-license-key"
+description = "New Relic License Key"
+regex = '''[0-9a-f]{40}'''
+entropy = 4.0
+keywords = ["NEW_RELIC_LICENSE_KEY"]
+severity = "medium"
+tags = ["newrelic", "license", "key"]
+
+# Terraform Cloud
+[[rules]]
+id = "terraform-api-token"
+description = "Terraform Cloud API Token"
+regex = '''[0-9a-zA-Z_-]{14}\.atlasv1\.[0-9a-zA-Z_-]{67}'''
+entropy = 4.0
+keywords = ["atlasv1"]
+severity = "high"
+tags = ["terraform", "api", "token"]

@@ -1,0 +1,20 @@
+# Build artifacts
+/secretscanner
+*.exe
+
+# Test / CI artifacts
+coverage.out
+*.sarif
+.secretscanner-baseline.json
+
+# Test data (contains secret patterns that trigger GitHub alerts)
+/testdata/
+
+# OS files
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

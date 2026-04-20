@@ -1,0 +1,8 @@
+- id: secretscanner
+  name: SecretScanner
+  description: "Scan for secrets in staged files"
+  entry: secretscanner scan
+  language: system
+  pass_filenames: false
+  stages: [pre-commit]
+  additional_dependencies: []
