@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -25,6 +24,7 @@ type scanOptions struct {
 	fromCommit      string
 	toCommit        string
 	baseline        string
+	saveBaseline    string
 	maxFileSize     int64
 	threads         int
 	verbose         bool
@@ -73,6 +73,7 @@ Examples:
 	cmd.Flags().StringVar(&opts.fromCommit, "from-commit", "", "Commit to start scanning from")
 	cmd.Flags().StringVar(&opts.toCommit, "to-commit", "", "Commit to stop scanning at")
 	cmd.Flags().StringVar(&opts.baseline, "baseline", "", "Baseline file to skip known findings")
+	cmd.Flags().StringVar(&opts.saveBaseline, "save-baseline", "", "Save findings as baseline file")
 	cmd.Flags().Int64Var(&opts.maxFileSize, "max-file-size", 100*1024*1024, "Maximum file size to scan (bytes)")
 	cmd.Flags().IntVarP(&opts.threads, "threads", "t", 0, "Number of parallel threads (0 = auto)")
 	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "Verbose output")
@@ -157,11 +158,19 @@ func (o *scanOptions) run(cmd *cobra.Command, args []string) error {
 
 	// Generate report
 	report := &scanner.Report{
-		Findings:   findings,
+		Findings:     findings,
 		FilesScanned: s.GetStats().FilesScanned,
-		ScanTime:   time.Since(startTime),
-		ScannedAt:  time.Now(),
-		Version:    cmd.Root().Version,
+		ScanTime:     time.Since(startTime),
+		ScannedAt:    time.Now(),
+		Version:      cmd.Root().Version,
+	}
+
+	// Save baseline if requested
+	if o.saveBaseline != "" {
+		if err := scanner.SaveBaseline(report, o.saveBaseline); err != nil {
+			return fmt.Errorf("failed to save baseline: %w", err)
+		}
+		fmt.Fprintf(os.Stderr, "Baseline saved to %s (%d findings)\n", o.saveBaseline, len(findings))
 	}
 
 	// Output results
@@ -237,26 +246,10 @@ func filterBySeverity(findings []*scanner.Finding, severities []string) []*scann
 }
 
 func filterByBaseline(findings []*scanner.Finding, baselinePath string) ([]*scanner.Finding, error) {
-	data, err := os.ReadFile(baselinePath)
+	baseline, err := scanner.LoadBaseline(baselinePath)
 	if err != nil {
 		return nil, err
 	}
 
-	var baseline scanner.Report
-	if err := json.Unmarshal(data, &baseline); err != nil {
-		return nil, err
-	}
-
-	baselineFingerprints := make(map[string]bool)
-	for _, f := range baseline.Findings {
-		baselineFingerprints[f.Fingerprint] = true
-	}
-
-	var filtered []*scanner.Finding
-	for _, f := range findings {
-		if !baselineFingerprints[f.Fingerprint] {
-			filtered = append(filtered, f)
-		}
-	}
-	return filtered, nil
+	return scanner.FilterNewFindings(findings, baseline), nil
 }

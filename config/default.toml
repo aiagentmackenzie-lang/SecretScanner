@@ -47,7 +47,7 @@ id = "aws-secret-key"
 description = "AWS Secret Access Key"
 regex = '''\b([A-Za-z0-9/+=]{40})\b'''
 entropy = 4.5
-keywords = []
+keywords = ["AWS_SECRET", "aws_secret", "AwsSecret"]
 severity = "critical"
 tags = ["aws", "cloud", "secret-key"]
 
