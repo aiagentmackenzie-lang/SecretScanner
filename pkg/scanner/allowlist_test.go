@@ -101,22 +101,22 @@ func TestHasStopwordMatch(t *testing.T) {
 	}{
 		{
 			name:     "contains example",
-			content:  "This is an example API key",
-			expected: true,
-		},
-		{
-			name:     "contains test",
-			content:  "This is a test token",
+			content:  "example",
 			expected: true,
 		},
 		{
 			name:     "contains placeholder",
-			content:  "Put your placeholder here",
+			content:  "placeholder_value_here",
 			expected: true,
 		},
 		{
+			name:     "contains test (no longer a stopword)",
+			content:  "test_token_value",
+			expected: false,
+		},
+		{
 			name:     "legitimate secret",
-			content:  "api_key=sk-1234567890abcdef",
+			content:  "sk-1234567890abcdef",
 			expected: false,
 		},
 	}
@@ -142,8 +142,9 @@ func TestHasStopwordMatch_CaseInsensitive(t *testing.T) {
 		{"EXAMPLE", true},
 		{"Example", true},
 		{"example", true},
-		{"TeSt", true},
-		{"TEST", true},
+		{"PLACEHOLDER", true},
+		{"placeholder", true},
+		{"notastopword", false},
 	}
 
 	for _, tt := range tests {

@@ -1,7 +1,6 @@
 package scanner
 
 import (
-	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -16,13 +15,14 @@ import (
 
 // Scanner is the main secret detection engine
 type Scanner struct {
-	config       *config.Config
-	options      *Options
-	ahocorasick  *ahocorasick.Matcher
-	keywords     map[string][]int // keyword -> rule indices
-	compiledREs  map[int]*regexp.Regexp
-	stats        Stats
-	statsMu      sync.Mutex
+	config      *config.Config
+	options     *Options
+	ahocorasick *ahocorasick.Matcher
+	keywords    map[string][]int // keyword -> rule indices
+	compiledREs map[int]*regexp.Regexp
+	globalRegex []*regexp.Regexp // pre-compiled global allowlist regexes
+	stats       Stats
+	statsMu     sync.Mutex
 }
 
 // Stats holds scanning statistics
@@ -67,6 +67,7 @@ func New(cfg *config.Config, opts *Options) *Scanner {
 
 	s.buildAhoCorasick()
 	s.compileRegexes()
+	s.compileGlobalAllowlist()
 
 	return s
 }
@@ -87,7 +88,6 @@ func (s *Scanner) buildAhoCorasick() {
 	}
 
 	if len(patterns) > 0 {
-		// Case-insensitive matching
 		var bytePatterns [][]byte
 		for i := range patterns {
 			bytePatterns = append(bytePatterns, []byte(strings.ToLower(patterns[i])))
@@ -109,6 +109,18 @@ func (s *Scanner) compileRegexes() {
 	}
 }
 
+// compileGlobalAllowlist pre-compiles global allowlist regex patterns
+func (s *Scanner) compileGlobalAllowlist() {
+	for _, allowlist := range s.config.Allowlist {
+		for _, pattern := range allowlist.Regexes {
+			re, err := regexp.Compile(pattern)
+			if err == nil {
+				s.globalRegex = append(s.globalRegex, re)
+			}
+		}
+	}
+}
+
 // ScanFilesystem scans files and directories
 func (s *Scanner) ScanFilesystem(root string) ([]*Finding, error) {
 	var findings []*Finding
@@ -117,7 +129,6 @@ func (s *Scanner) ScanFilesystem(root string) ([]*Finding, error) {
 
 	jobs := make(chan string, 100)
 
-	// Start workers
 	for i := 0; i < s.options.Threads; i++ {
 		wg.Add(1)
 		go func() {
@@ -137,31 +148,26 @@ func (s *Scanner) ScanFilesystem(root string) ([]*Finding, error) {
 		}()
 	}
 
-	// Walk directory
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil // Skip errors
+			return nil
 		}
 
 		if info.IsDir() {
-			// Skip git dirs
 			if info.Name() == ".git" {
 				return filepath.SkipDir
 			}
 			return nil
 		}
 
-		// Skip files that are too large
 		if info.Size() > s.options.MaxFileSize {
 			return nil
 		}
 
-		// Check if file should be scanned
 		if !s.shouldScanFile(path) {
 			return nil
 		}
 
-		// Check allowlist
 		if s.isAllowedPath(path) {
 			return nil
 		}
@@ -193,9 +199,7 @@ func (s *Scanner) scanFile(path string) ([]*Finding, error) {
 		return nil, err
 	}
 
-	// Check if binary
-	isBin := s.isBinary(content)
-	if isBin {
+	if s.isBinary(content) {
 		return nil, nil
 	}
 
@@ -206,31 +210,19 @@ func (s *Scanner) scanFile(path string) ([]*Finding, error) {
 func (s *Scanner) scanContent(filename string, content []byte, commit string) ([]*Finding, error) {
 	var findings []*Finding
 
-	// Convert to string for processing
 	text := string(content)
 
-	// Check allowlists first
+	// Only check path-based allowlists at file level
 	if s.isAllowedPath(filename) {
-		return findings, nil
-	}
-
-	if s.hasAllowlistMatch(text) {
 		return findings, nil
 	}
 
 	// Get candidate rules using Aho-Corasick
 	candidates := s.getCandidateRules(text)
 
-	// Scan each candidate rule
 	for ruleIdx := range candidates {
 		rule := s.config.Rules[ruleIdx]
-		
-		// Check rule-specific allowlist
-		if s.isRuleAllowed(&rule, filename, text) {
-			continue
-		}
 
-		// Try regex match
 		re, ok := s.compiledREs[ruleIdx]
 		if !ok {
 			continue
@@ -243,7 +235,17 @@ func (s *Scanner) scanContent(filename string, content []byte, commit string) ([
 			}
 
 			secret := text[match[0]:match[1]]
-			
+
+			// Check if the individual secret is allowlisted (per-match, not per-file)
+			if s.isSecretAllowlisted(&rule, secret) {
+				continue
+			}
+
+			// Check global allowlist against the matched secret, not the whole file
+			if s.isSecretGloballyAllowlisted(secret) {
+				continue
+			}
+
 			// Check entropy
 			calc := entropy.New(rule.Entropy)
 			if !calc.IsValid(secret) {
@@ -251,15 +253,12 @@ func (s *Scanner) scanContent(filename string, content []byte, commit string) ([
 			}
 			ent := calc.Calculate(secret)
 
-			// Get line and column
 			line, col := s.getPosition(text, match[0])
 
-			// Check for inline ignore comment on this line
 			if s.hasInlineIgnore(text, match[0]) {
 				continue
 			}
 
-			// Get context
 			context := s.getContext(text, match[0], match[1])
 
 			finding := &Finding{
@@ -278,9 +277,7 @@ func (s *Scanner) scanContent(filename string, content []byte, commit string) ([
 			}
 			finding.Fingerprint = finding.GenerateFingerprint()
 
-			// Set verification status if requested
 			if s.options.Verify && rule.Validate != "" {
-				// TODO: Implement verification
 				verified := false
 				finding.Verified = &verified
 			}
@@ -292,33 +289,68 @@ func (s *Scanner) scanContent(filename string, content []byte, commit string) ([
 	return findings, nil
 }
 
+// isSecretGloballyAllowlisted checks if a specific matched secret matches global allowlist patterns
+func (s *Scanner) isSecretGloballyAllowlisted(secret string) bool {
+	for _, re := range s.globalRegex {
+		if re.MatchString(secret) {
+			return true
+		}
+	}
+	return s.hasStopwordMatch(secret)
+}
+
+// hasStopwordMatch checks if the secret itself contains stopwords (not the whole file)
+func (s *Scanner) hasStopwordMatch(secret string) bool {
+	secretLower := strings.ToLower(secret)
+	for _, allowlist := range s.config.Allowlist {
+		for _, stopword := range allowlist.Stopwords {
+			if strings.Contains(secretLower, strings.ToLower(stopword)) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// isSecretAllowlisted checks rule-specific allowlists against the matched secret
+func (s *Scanner) isSecretAllowlisted(rule *config.Rule, secret string) bool {
+	for _, allowlist := range rule.Allowlist {
+		for _, pattern := range allowlist.Paths {
+			if matched, _ := regexp.MatchString(pattern, secret); matched {
+				return true
+			}
+		}
+		for _, pattern := range allowlist.Regexes {
+			if matched, _ := regexp.MatchString(pattern, secret); matched {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // getCandidateRules returns rule indices that match keywords in text
 func (s *Scanner) getCandidateRules(text string) map[int]bool {
 	candidates := make(map[int]bool)
 
 	if s.ahocorasick == nil {
-		// If no Aho-Corasick, check all rules
 		for i := range s.config.Rules {
 			candidates[i] = true
 		}
 		return candidates
 	}
 
-	// Search for keywords in lowercase text
 	matches := s.ahocorasick.Match([]byte(strings.ToLower(text)))
-	
+
 	for _, match := range matches {
-		// Get the matched pattern
-		// This is a simplified version; actual implementation would need
-		// to map back to the pattern
+		_ = match
 		for keyword, indices := range s.keywords {
-			if strings.Contains(strings.ToLower(text), keyword) {
+			if strings.Contains(strings.ToLower(text), strings.ToLower(keyword)) {
 				for _, idx := range indices {
 					candidates[idx] = true
 				}
 			}
 		}
-		_ = match // Use match to avoid unused error
 	}
 
 	return candidates
@@ -331,8 +363,10 @@ func (s *Scanner) isBinary(content []byte) bool {
 	}
 
 	// Check for null bytes
-	if bytes.Contains(content, []byte{0}) {
-		return true
+	for i := 0; i < len(content); i++ {
+		if content[i] == 0 {
+			return true
+		}
 	}
 
 	// Check percentage of non-printable characters
@@ -364,35 +398,6 @@ func (s *Scanner) isAllowedPath(path string) bool {
 	return false
 }
 
-// hasAllowlistMatch checks if content matches global allowlist regexes
-func (s *Scanner) hasAllowlistMatch(content string) bool {
-	for _, allowlist := range s.config.Allowlist {
-		for _, pattern := range allowlist.Regexes {
-			if matched, _ := regexp.MatchString(pattern, content); matched {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// isRuleAllowed checks rule-specific allowlists
-func (s *Scanner) isRuleAllowed(rule *config.Rule, filename, content string) bool {
-	for _, allowlist := range rule.Allowlist {
-		for _, pattern := range allowlist.Paths {
-			if matched, _ := regexp.MatchString(pattern, filename); matched {
-				return true
-			}
-		}
-		for _, pattern := range allowlist.Regexes {
-			if matched, _ := regexp.MatchString(pattern, content); matched {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 // getPosition converts byte offset to line and column
 func (s *Scanner) getPosition(text string, offset int) (line, col int) {
 	line = 1
@@ -416,8 +421,7 @@ func (s *Scanner) getPosition(text string, offset int) (line, col int) {
 // getContext extracts lines around a match
 func (s *Scanner) getContext(text string, start, end int) []string {
 	lines := strings.Split(text, "\n")
-	
-	// Find which lines contain the match
+
 	var startLine, endLine int
 	currOffset := 0
 	for i, line := range lines {
@@ -425,14 +429,13 @@ func (s *Scanner) getContext(text string, start, end int) []string {
 		if currOffset <= start && start <= lineEnd {
 			startLine = i
 		}
-		if currOffset <= end && end <= lineEnd+1 { // +1 for newline
+		if currOffset <= end && end <= lineEnd+1 {
 			endLine = i
 			break
 		}
 		currOffset = lineEnd + 1
 	}
 
-	// Get surrounding context (2 lines before and after)
 	contextStart := startLine - 2
 	if contextStart < 0 {
 		contextStart = 0
@@ -448,8 +451,7 @@ func (s *Scanner) getContext(text string, start, end int) []string {
 // shouldScanFile checks if a file should be scanned based on extension
 func (s *Scanner) shouldScanFile(path string) bool {
 	ext := strings.ToLower(filepath.Ext(path))
-	
-	// Skip known binary extensions
+
 	binaryExts := map[string]bool{
 		".jpg": true, ".jpeg": true, ".png": true, ".gif": true,
 		".pdf": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true,
@@ -463,14 +465,12 @@ func (s *Scanner) shouldScanFile(path string) bool {
 		return false
 	}
 
-	// Skip lock files
-	if strings.HasSuffix(path, "package-lock.json") || 
-	   strings.HasSuffix(path, "yarn.lock") ||
-	   strings.HasSuffix(path, "Cargo.lock") {
+	if strings.HasSuffix(path, "package-lock.json") ||
+		strings.HasSuffix(path, "yarn.lock") ||
+		strings.HasSuffix(path, "Cargo.lock") {
 		return false
 	}
 
-	// Skip large minified files
 	if strings.HasSuffix(path, ".min.js") || strings.HasSuffix(path, ".min.css") {
 		return false
 	}
@@ -500,13 +500,11 @@ func (s *Scanner) ScanGit(repoPath string) ([]*Finding, error) {
 
 // ScanStaged scans staged git changes
 func (s *Scanner) ScanStaged(repoPath string) ([]*Finding, error) {
-	// TODO: Implement staged scanning using git
 	return s.ScanFilesystem(repoPath)
 }
 
 // ScanGitRange scans git commits in a range
 func (s *Scanner) ScanGitRange(repoPath, fromCommit, toCommit string) ([]*Finding, error) {
-	// TODO: Implement git range scanning
 	return s.ScanFilesystem(repoPath)
 }
 

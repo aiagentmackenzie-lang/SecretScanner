@@ -22,16 +22,9 @@ regexes = [
     '''ASIAIOSFODNN7EXAMPLE''',
     '''AROAIOSFODNN7EXAMPLE''',
     '''A3TAIOSFDODNN7EXAMPLE''',
-    '''.*EXAMPLE.*''',
-    '''.*example.*''',
-    '''.*test.*''',
 ]
 stopwords = [
     "example",
-    "test",
-    "fake",
-    "dummy",
-    "sample",
     "placeholder",
 ]
 
