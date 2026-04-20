@@ -106,7 +106,7 @@ func TestCSVFormatter_Format(t *testing.T) {
 	report := &scanner.Report{Findings: findings}
 
 	var buf bytes.Buffer
-	formatter := &CSVFormatter{}
+	formatter := &CSVFormatter{Redact: false}
 	err := formatter.Format(report, &buf)
 	if err != nil {
 		t.Fatalf("Format() error = %v", err)
@@ -121,6 +121,37 @@ func TestCSVFormatter_Format(t *testing.T) {
 	}
 	if !strings.Contains(output, "critical") {
 		t.Error("CSV output should contain severity")
+	}
+}
+
+func TestCSVFormatter_Redact(t *testing.T) {
+	findings := []*scanner.Finding{
+		{
+			RuleID:      "test-rule",
+			Description: "Test finding",
+			Match:       "supersecretpassword12345678",
+			File:        "test.go",
+			Line:        10,
+			Severity:    "high",
+			Entropy:     4.5,
+		},
+	}
+
+	report := &scanner.Report{Findings: findings}
+
+	var buf bytes.Buffer
+	formatter := &CSVFormatter{Redact: true}
+	err := formatter.Format(report, &buf)
+	if err != nil {
+		t.Fatalf("Format() error = %v", err)
+	}
+
+	output := buf.String()
+	if strings.Contains(output, "supersecretpassword12345678") {
+		t.Error("CSV output should redact secrets when Redact=true")
+	}
+	if !strings.Contains(output, "***") {
+		t.Error("CSV output should include redaction marker")
 	}
 }
 
@@ -144,7 +175,7 @@ func TestTerminalFormatter_Format(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	formatter := &TerminalFormatter{}
+	formatter := &TerminalFormatter{Redact: false}
 	err := formatter.Format(report, &buf)
 	if err != nil {
 		t.Fatalf("Format() error = %v", err)
@@ -157,6 +188,41 @@ func TestTerminalFormatter_Format(t *testing.T) {
 	}
 }
 
+func TestTerminalFormatter_Redact(t *testing.T) {
+	findings := []*scanner.Finding{
+		{
+			RuleID:      "test-rule",
+			Description: "Test finding",
+			Match:       "supersecretpassword12345678",
+			File:        "app.go",
+			Line:        42,
+			Severity:    "high",
+			Entropy:     4.5,
+		},
+	}
+
+	report := &scanner.Report{
+		Findings:     findings,
+		FilesScanned: 10,
+		Version:      "1.0.0",
+	}
+
+	var buf bytes.Buffer
+	formatter := &TerminalFormatter{Redact: true}
+	err := formatter.Format(report, &buf)
+	if err != nil {
+		t.Fatalf("Format() error = %v", err)
+	}
+
+	output := buf.String()
+	if strings.Contains(output, "supersecretpassword12345678") {
+		t.Error("Terminal output should redact secrets when Redact=true")
+	}
+	if !strings.Contains(output, "***") {
+		t.Error("Terminal output should include redaction marker")
+	}
+}
+
 func TestTerminalFormatter_NoFindings(t *testing.T) {
 	report := &scanner.Report{
 		Findings: []*scanner.Finding{},
@@ -164,7 +230,7 @@ func TestTerminalFormatter_NoFindings(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	formatter := &TerminalFormatter{}
+	formatter := &TerminalFormatter{Redact: false}
 	err := formatter.Format(report, &buf)
 	if err != nil {
 		t.Fatalf("Format() error = %v", err)
@@ -195,7 +261,7 @@ func TestSARIFFormatter_Format(t *testing.T) {
 	report := &scanner.Report{Findings: findings, Version: "1.0.0"}
 
 	var buf bytes.Buffer
-	formatter := &SARIFFormatter{}
+	formatter := &SARIFFormatter{Redact: false}
 	err := formatter.Format(report, &buf)
 	if err != nil {
 		t.Fatalf("Format() error = %v", err)
@@ -218,6 +284,37 @@ func TestSARIFFormatter_Format(t *testing.T) {
 	runs, ok := sarif["runs"].([]interface{})
 	if !ok || len(runs) == 0 {
 		t.Error("SARIF should contain runs")
+	}
+}
+
+func TestSARIFFormatter_Redact(t *testing.T) {
+	findings := []*scanner.Finding{
+		{
+			RuleID:      "github-pat",
+			Description: "GitHub PAT",
+			Match:       "ghp_supersecretpassword12345678abcdefghij",
+			File:        "config.yml",
+			Line:        25,
+			Column:      15,
+			Severity:    "high",
+			Fingerprint: "abc123def456",
+			Tags:        []string{"github", "token"},
+			Entropy:     4.5,
+		},
+	}
+
+	report := &scanner.Report{Findings: findings, Version: "1.0.0"}
+
+	var buf bytes.Buffer
+	formatter := &SARIFFormatter{Redact: true}
+	err := formatter.Format(report, &buf)
+	if err != nil {
+		t.Fatalf("Format() error = %v", err)
+	}
+
+	output := buf.String()
+	if strings.Contains(output, "ghp_supersecretpassword12345678abcdefghij") {
+		t.Error("SARIF output should redact secrets when Redact=true")
 	}
 }
 

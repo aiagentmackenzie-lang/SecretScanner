@@ -287,6 +287,125 @@ func TestScanner_isAllowedPath(t *testing.T) {
 	}
 }
 
+func TestScanner_ScanBuffer_SendGrid(t *testing.T) {
+	cfg, _ := config.LoadDefault()
+	s := New(cfg, nil)
+
+	content := []byte(`SENDGRID_KEY=SG.fk1234567890abcdefghij.fk1234567890abcdefghijklmnopqrstuvwxyz12345`)
+
+	findings, err := s.ScanBuffer("test.env", content)
+	if err != nil {
+		t.Fatalf("ScanBuffer() error = %v", err)
+	}
+
+	found := false
+	for _, f := range findings {
+		if f.RuleID == "sendgrid-api-key" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		// List all findings for debug
+		for _, f := range findings {
+			t.Logf("Found: %s (match: %s)", f.RuleID, f.Match)
+		}
+		t.Error("ScanBuffer() should find sendgrid-api-key")
+	}
+}
+
+func TestScanner_ScanBuffer_MySQLConnection(t *testing.T) {
+	cfg, _ := config.LoadDefault()
+	s := New(cfg, nil)
+
+	content := []byte(`DATABASE_URL=mysql://admin:secretpass@db.prodhost.com:3306/production`)
+
+	findings, err := s.ScanBuffer("test.env", content)
+	if err != nil {
+		t.Fatalf("ScanBuffer() error = %v", err)
+	}
+
+	found := false
+	for _, f := range findings {
+		t.Logf("Found: %s (match: %s)", f.RuleID, f.Match)
+		if f.RuleID == "database-connection-mysql" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("ScanBuffer() should find database-connection-mysql")
+	}
+}
+
+func TestScanner_ScanBuffer_MongoDBConnection(t *testing.T) {
+	cfg, _ := config.LoadDefault()
+	s := New(cfg, nil)
+
+	content := []byte(`MONGO_URI=mongodb://admin:secretpass@cluster.mongodb.net/test`)
+
+	findings, err := s.ScanBuffer("test.env", content)
+	if err != nil {
+		t.Fatalf("ScanBuffer() error = %v", err)
+	}
+
+	found := false
+	for _, f := range findings {
+		if f.RuleID == "database-connection-mongodb" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("ScanBuffer() should find database-connection-mongodb")
+	}
+}
+
+func TestScanner_ScanBuffer_RedshiftConnection(t *testing.T) {
+	cfg, _ := config.LoadDefault()
+	s := New(cfg, nil)
+
+	content := []byte(`DATABASE_URL=postgresql://admin:secretpass@db.prodhost.com:5439/db`)
+
+	findings, err := s.ScanBuffer("test.env", content)
+	if err != nil {
+		t.Fatalf("ScanBuffer() error = %v", err)
+	}
+
+	found := false
+	for _, f := range findings {
+		if f.RuleID == "database-connection" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("ScanBuffer() should find database-connection (postgresql)")
+	}
+}
+
+func TestScanner_ScanBuffer_SlackWebhook(t *testing.T) {
+	cfg, _ := config.LoadDefault()
+	s := New(cfg, nil)
+
+	content := []byte(`SLACK_WEBHOOK=https://hooks.slack.com/services/T12345678/B1234567890/abcdefghijklmnopqrstuvwxyz1234`)
+
+	findings, err := s.ScanBuffer("test.env", content)
+	if err != nil {
+		t.Fatalf("ScanBuffer() error = %v", err)
+	}
+
+	found := false
+	for _, f := range findings {
+		if f.RuleID == "slack-webhook" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("ScanBuffer() should find slack-webhook")
+	}
+}
+
 func BenchmarkScanBuffer(b *testing.B) {
 	cfg, _ := config.LoadDefault()
 	s := New(cfg, nil)

@@ -263,7 +263,7 @@ tags = ["secret", "password", "generic"]
 id = "database-connection"
 description = "Database Connection String"
 regex = '''(?i)(mongodb(\+srv)?|postgres(ql)?|mysql|redis|amqp)://[^:]+:[^@]+@'''
-keywords = ["mongodb://", "postgres://", "mysql://", "redis://"]
+keywords = ["mongodb://", "postgres://", "postgresql://", "mysql://", "redis://"]
 severity = "high"
 tags = ["database", "connection", "string"]
 
@@ -275,7 +275,7 @@ id = "twilio-api-key"
 description = "Twilio API Key"
 regex = '''SK[a-f0-9]{32}'''
 entropy = 3.5
-keywords = ["SK"]
+keywords = []
 severity = "high"
 tags = ["twilio", "api", "key"]
 
@@ -284,7 +284,7 @@ id = "twilio-account-sid"
 description = "Twilio Account SID"
 regex = '''AC[a-f0-9]{32}'''
 entropy = 3.5
-keywords = ["AC"]
+keywords = []
 severity = "high"
 tags = ["twilio", "account", "sid"]
 
@@ -292,9 +292,9 @@ tags = ["twilio", "account", "sid"]
 [[rules]]
 id = "vault-token"
 description = "HashiCorp Vault Token"
-regex = '''[sb]\.[A-Za-z0-9]{24}'''
+regex = '''(s|b)\.[A-Za-z0-9]{24}'''
 entropy = 4.0
-keywords = ["s.", "b."]
+keywords = []
 severity = "critical"
 tags = ["vault", "hashicorp", "token"]
 
@@ -304,7 +304,7 @@ id = "telegram-bot-token"
 description = "Telegram Bot Token"
 regex = '''[0-9]{8,10}:[a-zA-Z0-9_-]{35}'''
 entropy = 4.0
-keywords = [":AA"]
+keywords = []
 severity = "high"
 tags = ["telegram", "bot", "token"]
 
@@ -344,7 +344,7 @@ id = "openai-api-key"
 description = "OpenAI API Key"
 regex = '''sk-(proj|live|test)-[a-zA-Z0-9]{48}'''
 entropy = 4.0
-keywords = ["sk-"]
+keywords = ["sk-proj", "sk-live", "sk-test"]
 severity = "critical"
 tags = ["openai", "api", "key", "ai"]
 
@@ -442,43 +442,43 @@ keywords = ["da2-"]
 severity = "high"
 tags = ["aws", "appsync", "api", "key"]
 
-# Heroku
+# Heroku — UUID pattern is inherently broad; keep keyword-scoped
 [[rules]]
 id = "heroku-api-key"
 description = "Heroku API Key"
-regex = '''[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}'''
+regex = '''(?i)(?:heroku[_-]?api[_-]?key|HEROKU_API_KEY)[\s]*[=:]+[\s]*[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}'''
 entropy = 3.5
-keywords = ["heroku", "HEROKU_API_KEY"]
+keywords = ["heroku_api_key", "HEROKU_API_KEY"]
 severity = "high"
 tags = ["heroku", "api", "key"]
 
-# Cloudflare
+# Cloudflare — 37-hex is extremely broad; require context
 [[rules]]
 id = "cloudflare-api-key"
 description = "Cloudflare API Key"
-regex = '''[0-9a-f]{37}'''
+regex = '''(?i)(?:cloudflare[_-]?api[_-]?key|CF_API_KEY|CLOUDFLARE_API_KEY)[\s]*[=:]+[\s]*[0-9a-f]{37}'''
 entropy = 4.5
-keywords = ["cloudflare"]
+keywords = ["cloudflare_api_key", "CF_API_KEY"]
 severity = "high"
 tags = ["cloudflare", "api", "key"]
 
-# Sentry
+# Sentry — 64-hex is extremely broad; require context
 [[rules]]
 id = "sentry-auth-token"
 description = "Sentry Auth Token"
-regex = '''[0-9a-f]{64}'''
+regex = '''(?i)(?:sentry[_-]?auth[_-]?token|SENTRY_AUTH_TOKEN|SENTRY_DSN)[\s]*[=:]+[\s]*[0-9a-f]{64}'''
 entropy = 4.0
-keywords = ["sentry", "SENTRY_AUTH_TOKEN"]
+keywords = ["sentry_auth_token", "SENTRY_AUTH_TOKEN"]
 severity = "high"
 tags = ["sentry", "auth", "token"]
 
-# Segment
+# Segment — 32-alphanum is extremely broad; require context
 [[rules]]
 id = "segment-write-key"
 description = "Segment Write Key"
-regex = '''[0-9a-zA-Z]{32}'''
+regex = '''(?i)(?:segment[_-]?write[_-]?key|writeKey|SEGMENT_WRITE_KEY)[\s]*[=:]+[\s]*[0-9a-zA-Z]{32}'''
 entropy = 4.0
-keywords = ["segment", "writeKey"]
+keywords = ["writekey", "SEGMENT_WRITE_KEY"]
 severity = "medium"
 tags = ["segment", "write", "key"]
 
@@ -486,9 +486,9 @@ tags = ["segment", "write", "key"]
 [[rules]]
 id = "newrelic-license-key"
 description = "New Relic License Key"
-regex = '''[0-9a-f]{40}'''
+regex = '''(?i)(?:new[_-]?relic[_-]?license[_-]?key|NEW_RELIC_LICENSE_KEY|NRLICENSE)[\s]*[=:]+[\s]*[0-9a-f]{40}'''
 entropy = 4.0
-keywords = ["NEW_RELIC_LICENSE_KEY"]
+keywords = ["NEW_RELIC_LICENSE_KEY", "NRLICENSE"]
 severity = "medium"
 tags = ["newrelic", "license", "key"]
 
@@ -501,3 +501,29 @@ entropy = 4.0
 keywords = ["atlasv1"]
 severity = "high"
 tags = ["terraform", "api", "token"]
+
+# Additional database connection string rules
+[[rules]]
+id = "database-connection-mysql"
+description = "MySQL Connection String with Password"
+regex = '''mysql://[^:\s]+:[^@\s]+@[^\s"']+'''
+keywords = ["mysql://"]
+severity = "high"
+tags = ["database", "mysql", "connection", "string"]
+
+[[rules]]
+id = "database-connection-mongodb"
+description = "MongoDB Connection String with Password"
+regex = '''mongodb(\+srv)?://[^:\s]+:[^@\s]+@[^\s"']+'''
+keywords = ["mongodb://"]
+severity = "high"
+tags = ["database", "mongodb", "connection", "string"]
+
+[[rules]]
+id = "database-connection-redis"
+description = "Redis Connection String with Password"
+regex = '''redis://:[^@\s]+@[^\s"']+'''
+keywords = ["redis://"]
+severity = "high"
+tags = ["database", "redis", "connection", "string"]
+

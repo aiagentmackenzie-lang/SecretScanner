@@ -200,11 +200,11 @@ func (o *scanOptions) outputResults(report *scanner.Report) error {
 	case "json":
 		formatter = &output.JSONFormatter{Redact: o.redact}
 	case "sarif":
-		formatter = &output.SARIFFormatter{}
+		formatter = &output.SARIFFormatter{Redact: o.redact}
 	case "csv":
-		formatter = &output.CSVFormatter{}
+		formatter = &output.CSVFormatter{Redact: o.redact}
 	case "terminal":
-		formatter = &output.TerminalFormatter{}
+		formatter = &output.TerminalFormatter{Redact: o.redact}
 	default:
 		return fmt.Errorf("unknown output format: %s", o.format)
 	}

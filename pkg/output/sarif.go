@@ -11,7 +11,9 @@ import (
 )
 
 // SARIFFormatter outputs findings in SARIF format for GitHub Code Scanning
-type SARIFFormatter struct{}
+type SARIFFormatter struct {
+	Redact bool
+}
 
 // SARIF root structure
 type sarifReport struct {
@@ -43,6 +45,7 @@ type sarifRule struct {
 	FullDescription  sarifMessage        `json:"fullDescription"`
 	DefaultConfiguration sarifRuleConfig `json:"defaultConfiguration"`
 	Help             sarifMessage        `json:"help"`
+	HelpURI          string              `json:"helpUri"`
 	Properties       sarifRuleProps      `json:"properties"`
 }
 
@@ -114,6 +117,7 @@ func (f *SARIFFormatter) Format(report *scanner.Report, w io.Writer) error {
 				Help: sarifMessage{
 					Text: finding.Description,
 				},
+				HelpURI:          fmt.Sprintf("https://github.com/aiagentmackenzie-lang/SecretScanner/blob/main/rules/%s.md", finding.RuleID),
 				Properties: sarifRuleProps{
 					Precision:        "high",
 					SecuritySeverity: severityToScore(finding.Severity),
@@ -122,31 +126,37 @@ func (f *SARIFFormatter) Format(report *scanner.Report, w io.Writer) error {
 			}
 		}
 
+		// Redact if requested
+		displayFinding := finding
+		if f.Redact {
+			displayFinding = finding.Redacted()
+		}
+
 		// Create result
 		result := sarifResult{
-			RuleID: finding.RuleID,
-			Level:  severityToLevel(finding.Severity),
+			RuleID: displayFinding.RuleID,
+			Level:  severityToLevel(displayFinding.Severity),
 			Message: sarifMessage{
-				Text: fmt.Sprintf("%s: %s", finding.Description, finding.Match),
+				Text: fmt.Sprintf("%s: %s", displayFinding.Description, displayFinding.Match),
 			},
 			Locations: []sarifLocation{
 				{
 					PhysicalLocation: sarifPhysical{
 						ArtifactLocation: sarifArtifact{
-							URI: filepath.ToSlash(finding.File),
+							URI: filepath.ToSlash(displayFinding.File),
 						},
 						Region: sarifRegion{
-							StartLine:   finding.Line,
-							StartColumn: finding.Column,
+							StartLine:   displayFinding.Line,
+							StartColumn: displayFinding.Column,
 							Snippet: sarifMessage{
-								Text: truncate(finding.Match, 100),
+								Text: truncate(displayFinding.Match, 100),
 							},
 						},
 					},
 				},
 			},
 			PartialFingerprints: sarifFingerprints{
-				Primary: finding.Fingerprint,
+				Primary: displayFinding.Fingerprint,
 			},
 		}
 

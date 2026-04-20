@@ -15,14 +15,15 @@ import (
 
 // Scanner is the main secret detection engine
 type Scanner struct {
-	config      *config.Config
-	options     *Options
-	ahocorasick *ahocorasick.Matcher
-	keywords    map[string][]int // keyword -> rule indices
-	compiledREs map[int]*regexp.Regexp
-	globalRegex []*regexp.Regexp // pre-compiled global allowlist regexes
-	stats       Stats
-	statsMu     sync.Mutex
+	config          *config.Config
+	options         *Options
+	ahocorasick     *ahocorasick.Matcher
+	keywords        map[string][]int // keyword -> rule indices
+	acPatterns      []string         // ordered list of unique keywords (AC dictionary order)
+	compiledREs     map[int]*regexp.Regexp
+	globalRegex     []*regexp.Regexp // pre-compiled global allowlist regexes
+	stats           Stats
+	statsMu         sync.Mutex
 }
 
 // Stats holds scanning statistics
@@ -86,6 +87,9 @@ func (s *Scanner) buildAhoCorasick() {
 			s.keywords[keyword] = append(s.keywords[keyword], idx)
 		}
 	}
+
+	// Store the ordered patterns list for dictionary index lookup
+	s.acPatterns = patterns
 
 	if len(patterns) > 0 {
 		var bytePatterns [][]byte
@@ -299,17 +303,37 @@ func (s *Scanner) isSecretGloballyAllowlisted(secret string) bool {
 	return s.hasStopwordMatch(secret)
 }
 
-// hasStopwordMatch checks if the secret itself contains stopwords (not the whole file)
+// hasStopwordMatch checks if the secret itself contains stopwords
+// Uses word-boundary matching: stopwords must appear as a distinct
+// word (delimited by non-alphanumeric chars), not as a substring.
+// This prevents "example" from killing matches like "db.example.com".
 func (s *Scanner) hasStopwordMatch(secret string) bool {
 	secretLower := strings.ToLower(secret)
 	for _, allowlist := range s.config.Allowlist {
 		for _, stopword := range allowlist.Stopwords {
-			if strings.Contains(secretLower, strings.ToLower(stopword)) {
+			if isStopwordMatch(secretLower, strings.ToLower(stopword)) {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+// isStopwordMatch checks if a stopword appears as a word boundary match in text.
+// "example" matches "= example" or "\"example\"" but NOT "db.example.com".
+func isStopwordMatch(text, stopword string) bool {
+	idx := strings.Index(text, stopword)
+	if idx == -1 {
+		return false
+	}
+	// Check that stopword is at a word boundary
+	beforeOK := idx == 0 || !isAlphanumeric(text[idx-1])
+	afterOK := idx+len(stopword) >= len(text) || !isAlphanumeric(text[idx+len(stopword)])
+	return beforeOK && afterOK
+}
+
+func isAlphanumeric(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
 }
 
 // isSecretAllowlisted checks rule-specific allowlists against the matched secret
@@ -340,12 +364,27 @@ func (s *Scanner) getCandidateRules(text string) map[int]bool {
 		return candidates
 	}
 
-	matches := s.ahocorasick.Match([]byte(strings.ToLower(text)))
+	// Run Aho-Corasick matcher on lowercased text
+	// Match() returns indexes into the dictionary (which pattern was found), NOT byte positions
+	lowerText := strings.ToLower(text)
+	dictIndexes := s.ahocorasick.Match([]byte(lowerText))
 
-	for _, match := range matches {
-		_ = match
+	for _, dictIdx := range dictIndexes {
+		if dictIdx < 0 || dictIdx >= len(s.acPatterns) {
+			continue
+		}
+		keyword := s.acPatterns[dictIdx]
+		if ruleIndices, ok := s.keywords[keyword]; ok {
+			for _, idx := range ruleIndices {
+				candidates[idx] = true
+			}
+		}
+	}
+
+	// If AC found nothing, fall back to direct string search
+	if len(candidates) == 0 {
 		for keyword, indices := range s.keywords {
-			if strings.Contains(strings.ToLower(text), strings.ToLower(keyword)) {
+			if strings.Contains(lowerText, strings.ToLower(keyword)) {
 				for _, idx := range indices {
 					candidates[idx] = true
 				}

@@ -10,7 +10,9 @@ import (
 )
 
 // CSVFormatter outputs findings in CSV format
-type CSVFormatter struct{}
+type CSVFormatter struct {
+	Redact bool
+}
 
 // Format outputs the report in CSV format
 func (f *CSVFormatter) Format(report *scanner.Report, w io.Writer) error {
@@ -36,6 +38,10 @@ func (f *CSVFormatter) Format(report *scanner.Report, w io.Writer) error {
 
 	// Write findings
 	for _, finding := range report.Findings {
+		displayFinding := finding
+		if f.Redact {
+			displayFinding = finding.Redacted()
+		}
 		verified := ""
 		if finding.Verified != nil {
 			verified = strconv.FormatBool(*finding.Verified)
@@ -47,15 +53,15 @@ func (f *CSVFormatter) Format(report *scanner.Report, w io.Writer) error {
 		}
 
 		record := []string{
-			finding.RuleID,
-			finding.Description,
-			finding.Match,
-			finding.File,
-			strconv.Itoa(finding.Line),
-			strconv.Itoa(finding.Column),
-			finding.Severity,
-			formatTags(finding.Tags),
-			fmt.Sprintf("%.2f", finding.Entropy),
+			displayFinding.RuleID,
+			displayFinding.Description,
+			displayFinding.Match,
+			displayFinding.File,
+			strconv.Itoa(displayFinding.Line),
+			strconv.Itoa(displayFinding.Column),
+			displayFinding.Severity,
+			formatTags(displayFinding.Tags),
+			fmt.Sprintf("%.2f", displayFinding.Entropy),
 			fingerprint,
 			verified,
 		}

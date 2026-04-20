@@ -9,7 +9,9 @@ import (
 )
 
 // TerminalFormatter outputs findings in human-readable terminal format
-type TerminalFormatter struct{}
+type TerminalFormatter struct {
+	Redact bool
+}
 
 // Color codes for terminal output
 const (
@@ -72,8 +74,12 @@ func (f *TerminalFormatter) Format(report *scanner.Report, w io.Writer) error {
 			fmt.Fprintf(w, "    %sLine %d, Column %d%s\n",
 				colorGray, finding.Line, finding.Column, colorReset)
 			
-			// Match (redacted)
-			match := finding.Match
+			// Match (redact if requested)
+			displayFinding := finding
+			if f.Redact {
+				displayFinding = finding.Redacted()
+			}
+			match := displayFinding.Match
 			if len(match) > 40 {
 				match = match[:20] + "..." + match[len(match)-20:]
 			}
