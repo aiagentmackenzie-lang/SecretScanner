@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,10 @@ import (
 	"github.com/aiagentmackenzie-lang/SecretScanner/pkg/output"
 	"github.com/aiagentmackenzie-lang/SecretScanner/pkg/scanner"
 )
+
+// ErrFindingsFound is returned when --fail-on-findings is set and secrets are found.
+// The caller (main) translates this to exit code 1.
+var ErrFindingsFound = errors.New("secrets found")
 
 type scanOptions struct {
 	sources         []string
@@ -78,7 +83,7 @@ Examples:
 	cmd.Flags().IntVarP(&opts.threads, "threads", "t", 0, "Number of parallel threads (0 = auto)")
 	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "Verbose output")
 	cmd.Flags().BoolVar(&opts.redact, "redact", false, "Redact secrets in output")
-	cmd.Flags().BoolVar(&opts.verify, "verify", false, "Verify secrets with live API calls")
+	cmd.Flags().BoolVar(&opts.verify, "verify", false, "Verify secrets with live API calls (WARNING: makes real HTTP requests to providers)")
 	cmd.Flags().StringVar(&opts.verifyStatus, "verify-status", "", "Filter by verification status: valid,invalid,revoked,error,unknown")
 	cmd.Flags().StringVar(&opts.gitLogOpts, "log-opts", "", "Additional git log options")
 
@@ -180,7 +185,7 @@ func (o *scanOptions) run(cmd *cobra.Command, args []string) error {
 
 	// Exit with appropriate code
 	if o.failOnFindings && len(findings) > 0 {
-		os.Exit(1)
+		return ErrFindingsFound
 	}
 
 	return nil

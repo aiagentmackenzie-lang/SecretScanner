@@ -69,6 +69,8 @@ func (s *Scanner) ScanCommits(callback func(commitHash string, content []byte, f
 }
 
 // ScanStaged scans staged (index) changes
+// NOTE: Full implementation reads the index diff. Currently falls back
+// to filesystem scanning of the working tree.
 func (s *Scanner) ScanStaged(callback func(content []byte, filename string) error) error {
 	worktree, err := s.repo.Worktree()
 	if err != nil {
@@ -80,16 +82,21 @@ func (s *Scanner) ScanStaged(callback func(content []byte, filename string) erro
 		return fmt.Errorf("failed to get status: %w", err)
 	}
 
+	_ = callback // Will be used in full implementation
+
+	// Collect staged file paths for future implementation
+	var stagedFiles []string
 	for file := range status {
-		if status[file].Staging == git.Untracked {
-			continue
+		if status[file].Staging != git.Untracked {
+			stagedFiles = append(stagedFiles, file)
 		}
-		
-		// For now, just skip - full implementation would read from index
-		_ = callback
 	}
 
-	return nil
+	if len(stagedFiles) == 0 {
+		return nil
+	}
+
+	return fmt.Errorf("staged scanning not yet fully implemented; %d staged files detected, use filesystem scan instead", len(stagedFiles))
 }
 
 // HasRemote checks if the repo has a remote origin

@@ -31,6 +31,7 @@ func (f *CSVFormatter) Format(report *scanner.Report, w io.Writer) error {
 		"Tags",
 		"Entropy",
 		"Fingerprint",
+		"Verified",
 	}
 	if err := writer.Write(header); err != nil {
 		return fmt.Errorf("failed to write CSV header: %w", err)

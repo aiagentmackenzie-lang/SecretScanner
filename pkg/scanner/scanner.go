@@ -401,20 +401,20 @@ func (s *Scanner) isBinary(content []byte) bool {
 		return false
 	}
 
-	// Check for null bytes
-	for i := 0; i < len(content); i++ {
-		if content[i] == 0 {
-			return true
-		}
-	}
-
-	// Check percentage of non-printable characters
 	const sampleSize = 1024
 	sample := content
 	if len(sample) > sampleSize {
 		sample = sample[:sampleSize]
 	}
 
+	// Check for null bytes in sample only
+	for i := range sample {
+		if sample[i] == 0 {
+			return true
+		}
+	}
+
+	// Check percentage of non-printable characters in sample
 	nonPrintable := 0
 	for _, b := range sample {
 		if b < 0x20 && b != '\n' && b != '\r' && b != '\t' {

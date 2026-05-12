@@ -13,7 +13,6 @@ paths = [
     '''vendor/''',
     '''node_modules/''',
     '''\.gitleaks\.toml$''',
-    '''\.gitleaks\.toml$''',
     '''(.*?)(\.jpg|\.jpeg|\.png|\.gif|\.pdf|\.doc|\.docx|\.bin|\.exe)$''',
     '''\.git/''',
 ]
@@ -45,7 +44,7 @@ regexes = ['''.+EXAMPLE$''']
 [[rules]]
 id = "aws-secret-key"
 description = "AWS Secret Access Key"
-regex = '''\b([A-Za-z0-9/+=]{40})\b'''
+regex = '''(?i)(?:aws[_-]?secret[_-]?access[_-]?key|aws[_-]?secret[_-]?key|AwsSecret)[\s]*[=:]+[\s]*["']?([A-Za-z0-9/+=]{40})["']?'''
 entropy = 4.5
 keywords = ["AWS_SECRET", "aws_secret", "AwsSecret"]
 severity = "critical"
@@ -63,7 +62,7 @@ tags = ["aws", "marketplace", "mws"]
 [[rules]]
 id = "github-pat"
 description = "GitHub Personal Access Token"
-regex = '''ghp_[0-9a-zA-Z]{36}'''
+regex = '''ghp_[0-9a-zA-Z_-]{36}'''
 entropy = 3.5
 keywords = ["ghp_"]
 severity = "high"
@@ -72,7 +71,7 @@ tags = ["github", "pat", "token"]
 [[rules]]
 id = "github-fine-grained-pat"
 description = "GitHub Fine-Grained PAT"
-regex = '''github_pat_[0-9a-zA-Z_]{22}_[0-9a-zA-Z_]{59}'''
+regex = '''github_pat_[0-9a-zA-Z_-]{22}_[0-9a-zA-Z_-]{59}'''
 entropy = 4.0
 keywords = ["github_pat_"]
 severity = "high"
@@ -81,7 +80,7 @@ tags = ["github", "pat", "token"]
 [[rules]]
 id = "github-oauth"
 description = "GitHub OAuth Token"
-regex = '''gho_[0-9a-zA-Z]{36}'''
+regex = '''gho_[0-9a-zA-Z_-]{36}'''
 entropy = 3.5
 keywords = ["gho_"]
 severity = "high"
@@ -90,7 +89,7 @@ tags = ["github", "oauth", "token"]
 [[rules]]
 id = "github-app-token"
 description = "GitHub App Token"
-regex = '''ghs_[0-9a-zA-Z]{36}'''
+regex = '''ghs_[0-9a-zA-Z_-]{36}'''
 entropy = 3.5
 keywords = ["ghs_"]
 severity = "high"
@@ -99,7 +98,7 @@ tags = ["github", "app", "token"]
 [[rules]]
 id = "github-refresh-token"
 description = "GitHub Refresh Token"
-regex = '''ghr_[0-9a-zA-Z]{36}'''
+regex = '''ghr_[0-9a-zA-Z_-]{36}'''
 entropy = 3.5
 keywords = ["ghr_"]
 severity = "high"
@@ -138,7 +137,7 @@ id = "discord-bot-token"
 description = "Discord Bot Token"
 regex = '''[MN][A-Za-z0-9]{23}\.[A-Za-z0-9-_]{6}\.[A-Za-z0-9-_]{27}'''
 entropy = 4.0
-keywords = []
+keywords = ["bot", "discord"]
 severity = "high"
 tags = ["discord", "bot", "token"]
 
@@ -206,8 +205,8 @@ tags = ["pgp", "private-key", "crypto"]
 [[rules]]
 id = "generic-private-key"
 description = "Generic Private Key"
-regex = '''-----BEGIN .* PRIVATE KEY.*-----'''
-keywords = ["-----BEGIN", "PRIVATE KEY-----"]
+regex = '''-----BEGIN (?!RSA |EC |OPENSSH |PGP )[^ ]* PRIVATE KEY[^-]*-----'''
+keywords = ["PRIVATE KEY-----"]
 severity = "critical"
 tags = ["private-key", "crypto"]
 
@@ -273,18 +272,18 @@ tags = ["database", "connection", "string"]
 [[rules]]
 id = "twilio-api-key"
 description = "Twilio API Key"
-regex = '''SK[a-f0-9]{32}'''
+regex = '''(?i)(?:twilio[_-]?api[_-]?key|TWILIO_API_KEY)[\s]*[=:]+[\s]*["']?SK[a-f0-9]{32}["']?'''
 entropy = 3.5
-keywords = []
+keywords = ["twilio_api_key", "TWILIO_API_KEY"]
 severity = "high"
 tags = ["twilio", "api", "key"]
 
 [[rules]]
 id = "twilio-account-sid"
 description = "Twilio Account SID"
-regex = '''AC[a-f0-9]{32}'''
+regex = '''(?i)(?:twilio[_-]?account[_-]?sid|TWILIO_ACCOUNT_SID)[\s]*[=:]+[\s]*["']?AC[a-f0-9]{32}["']?'''
 entropy = 3.5
-keywords = []
+keywords = ["twilio_account_sid", "TWILIO_ACCOUNT_SID"]
 severity = "high"
 tags = ["twilio", "account", "sid"]
 
@@ -292,9 +291,9 @@ tags = ["twilio", "account", "sid"]
 [[rules]]
 id = "vault-token"
 description = "HashiCorp Vault Token"
-regex = '''(s|b)\.[A-Za-z0-9]{24}'''
+regex = '''(?i)(?:vault[_-]?token|VAULT_TOKEN)[\s]*[=:]+[\s]*["']?(s|b)\.[A-Za-z0-9]{24}["']?'''
 entropy = 4.0
-keywords = []
+keywords = ["vault_token", "VAULT_TOKEN"]
 severity = "critical"
 tags = ["vault", "hashicorp", "token"]
 
@@ -304,7 +303,7 @@ id = "telegram-bot-token"
 description = "Telegram Bot Token"
 regex = '''[0-9]{8,10}:[a-zA-Z0-9_-]{35}'''
 entropy = 4.0
-keywords = []
+keywords = [":AA"]
 severity = "high"
 tags = ["telegram", "bot", "token"]
 
@@ -332,9 +331,9 @@ tags = ["mailgun", "api", "key"]
 [[rules]]
 id = "mailchimp-api-key"
 description = "Mailchimp API Key"
-regex = '''[0-9a-f]{32}-us[0-9]{1,2}'''
+regex = '''(?i)(?:mailchimp[_-]?api[_-]?key|MAILCHIMP_API_KEY)[\s]*[=:]+[\s]*["']?[0-9a-f]{32}-us[0-9]{1,2}["']?'''
 entropy = 3.5
-keywords = ["-us"]
+keywords = ["mailchimp_api_key", "MAILCHIMP_API_KEY"]
 severity = "high"
 tags = ["mailchimp", "api", "key"]
 
@@ -342,7 +341,7 @@ tags = ["mailchimp", "api", "key"]
 [[rules]]
 id = "openai-api-key"
 description = "OpenAI API Key"
-regex = '''sk-(proj|live|test)-[a-zA-Z0-9]{48}'''
+regex = '''sk-(proj|live|test)-[a-zA-Z0-9_-]{20,}'''
 entropy = 4.0
 keywords = ["sk-proj", "sk-live", "sk-test"]
 severity = "critical"
