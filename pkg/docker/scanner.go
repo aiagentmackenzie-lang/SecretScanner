@@ -42,11 +42,11 @@ func NewScanner(s *scanner.Scanner, opts *Options) *Scanner {
 
 // ImageResult contains scan results for an image
 type ImageResult struct {
-	ImageName     string              `json:"image_name"`
-	ImageID       string              `json:"image_id"`
-	LayersScanned int                 `json:"layers_scanned"`
-	Findings      []*scanner.Finding  `json:"findings"`
-	Errors        []string            `json:"errors,omitempty"`
+	ImageName     string             `json:"image_name"`
+	ImageID       string             `json:"image_id"`
+	LayersScanned int                `json:"layers_scanned"`
+	Findings      []*scanner.Finding `json:"findings"`
+	Errors        []string           `json:"errors,omitempty"`
 }
 
 // ScanImage scans a Docker image by name
@@ -97,14 +97,14 @@ func (s *Scanner) ScanTarball(r io.Reader) (*ImageResult, error) {
 		// Check if this is a layer tarball
 		if strings.HasSuffix(header.Name, "/layer.tar") || strings.HasSuffix(header.Name, ".tar") {
 			result.LayersScanned++
-			
+
 			// Scan the layer
 			layerFindings, err := s.scanLayer(tr, header.Name)
 			if err != nil {
 				result.Errors = append(result.Errors, fmt.Sprintf("layer scan error: %v", err))
 				continue
 			}
-			
+
 			result.Findings = append(result.Findings, layerFindings...)
 		}
 	}

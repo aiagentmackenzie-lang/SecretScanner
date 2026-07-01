@@ -13,17 +13,17 @@ var defaultConfig []byte
 
 // Config represents the full configuration
 type Config struct {
-	Title     string     `toml:"title"`
-	Extend    Extend     `toml:"extend"`
+	Title     string          `toml:"title"`
+	Extend    Extend          `toml:"extend"`
 	Allowlist []AllowlistRule `toml:"allowlist"`
-	Rules     []Rule     `toml:"rules"`
+	Rules     []Rule          `toml:"rules"`
 }
 
 // Extend configuration for extending other config files
 type Extend struct {
-	Path       string `toml:"path"`
-	URL        string `toml:"url"`
-	UseDefault bool   `toml:"useDefault"`
+	Path        string `toml:"path"`
+	URL         string `toml:"url"`
+	UseDefault  bool   `toml:"useDefault"`
 	Description string `toml:"description"`
 }
 
@@ -38,23 +38,23 @@ type AllowlistRule struct {
 
 // Rule defines a detection rule
 type Rule struct {
-	ID          string           `toml:"id"`
-	Description string           `toml:"description"`
-	Regex       string           `toml:"regex"`
-	Entropy     float64          `toml:"entropy"`
-	Keywords    []string         `toml:"keywords"`
-	Severity    string           `toml:"severity"`
-	Tags        []string         `toml:"tags"`
-	Validate    string           `toml:"validate"`
-	Allowlist   []AllowlistRule  `toml:"allowlist"`
-	Required    []RequiredRule   `toml:"required"`
+	ID          string          `toml:"id"`
+	Description string          `toml:"description"`
+	Regex       string          `toml:"regex"`
+	Entropy     float64         `toml:"entropy"`
+	Keywords    []string        `toml:"keywords"`
+	Severity    string          `toml:"severity"`
+	Tags        []string        `toml:"tags"`
+	Validate    string          `toml:"validate"`
+	Allowlist   []AllowlistRule `toml:"allowlist"`
+	Required    []RequiredRule  `toml:"required"`
 }
 
 // RequiredRule defines required companion rules for composite detection
 type RequiredRule struct {
-	ID      string `toml:"id"`
-	Regex   string `toml:"regex"`
-	WithinLines int `toml:"withinLines"`
+	ID          string `toml:"id"`
+	Regex       string `toml:"regex"`
+	WithinLines int    `toml:"withinLines"`
 }
 
 // LoadFromFile loads configuration from a TOML file

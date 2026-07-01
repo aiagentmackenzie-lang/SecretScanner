@@ -70,9 +70,9 @@ func TestFilterNewFindings(t *testing.T) {
 	}
 
 	findings := []*Finding{
-		{Fingerprint: "abc123", RuleID: "test-1"},       // Existing
-		{Fingerprint: "new789", RuleID: "test-3"},        // New
-		{Fingerprint: "newabc", RuleID: "test-4"},        // New
+		{Fingerprint: "abc123", RuleID: "test-1"}, // Existing
+		{Fingerprint: "new789", RuleID: "test-3"}, // New
+		{Fingerprint: "newabc", RuleID: "test-4"}, // New
 	}
 
 	newFindings := FilterNewFindings(findings, baseline)

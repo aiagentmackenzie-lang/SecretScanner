@@ -112,10 +112,10 @@ func TestScanner_getPosition(t *testing.T) {
 	text := "Line 1\nLine 2\nLine 3"
 
 	tests := []struct {
-		name      string
-		offset    int
-		wantLine  int
-		wantCol   int
+		name     string
+		offset   int
+		wantLine int
+		wantCol  int
 	}{
 		{
 			name:     "first line",
@@ -236,7 +236,7 @@ func TestScanner_ScanBuffer_NoFalsePositives(t *testing.T) {
 	// Content with low entropy (should not trigger)
 	content := []byte(`password = "example_password_123"
 secret_key = "test_secret_key"
-`) 
+`)
 
 	findings, err := s.ScanBuffer("test.go", content)
 	if err != nil {

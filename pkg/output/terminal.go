@@ -42,7 +42,7 @@ func (f *TerminalFormatter) Format(report *scanner.Report, w io.Writer) error {
 	// Summary
 	severityCounts := report.SeverityCounts()
 	fmt.Fprintf(w, "%sFound %d secrets%s\n\n", colorBold, len(report.Findings), colorReset)
-	
+
 	if count := severityCounts["critical"]; count > 0 {
 		fmt.Fprintf(w, "  %s%sCRITICAL%s: %d\n", colorBold, colorRed, colorReset, count)
 	}
@@ -61,19 +61,19 @@ func (f *TerminalFormatter) Format(report *scanner.Report, w io.Writer) error {
 	fileGroups := report.FileSummary()
 	for file, findings := range fileGroups {
 		fmt.Fprintf(w, "%s%s📁 %s%s\n", colorBold, colorBlue, file, colorReset)
-		
+
 		for _, finding := range findings {
 			severityColor := getSeverityColor(finding.Severity)
-			
+
 			// Finding header
-			fmt.Fprintf(w, "  %s%s[%s]%s%s %s%s\n", 
+			fmt.Fprintf(w, "  %s%s[%s]%s%s %s%s\n",
 				colorBold, severityColor, strings.ToUpper(finding.Severity), colorReset,
 				severityColor, finding.RuleID, colorReset)
-			
+
 			// Location
 			fmt.Fprintf(w, "    %sLine %d, Column %d%s\n",
 				colorGray, finding.Line, finding.Column, colorReset)
-			
+
 			// Match (redact if requested)
 			displayFinding := finding
 			if f.Redact {
@@ -84,18 +84,18 @@ func (f *TerminalFormatter) Format(report *scanner.Report, w io.Writer) error {
 				match = match[:20] + "..." + match[len(match)-20:]
 			}
 			fmt.Fprintf(w, "    %sMatch:%s %s\n", colorBold, colorReset, match)
-			
+
 			// Description
 			fmt.Fprintf(w, "    %sDescription:%s %s\n", colorBold, colorReset, finding.Description)
-			
+
 			// Tags
 			if len(finding.Tags) > 0 {
 				fmt.Fprintf(w, "    %sTags:%s %s\n", colorBold, colorReset, strings.Join(finding.Tags, ", "))
 			}
-			
+
 			// Entropy
 			fmt.Fprintf(w, "    %sEntropy:%s %.2f\n", colorBold, colorReset, finding.Entropy)
-			
+
 			fmt.Fprintln(w)
 		}
 	}

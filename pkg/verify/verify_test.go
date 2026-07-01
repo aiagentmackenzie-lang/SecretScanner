@@ -43,12 +43,12 @@ func TestIsVerifiableRule(t *testing.T) {
 
 func TestVerifier_Verify_Unsupported(t *testing.T) {
 	v := NewVerifier()
-	
+
 	result, err := v.Verify("unsupported-rule", "test-secret")
 	if err != nil {
 		t.Fatalf("Verify() error = %v", err)
 	}
-	
+
 	if result.Status != "unknown" {
 		t.Errorf("Expected status 'unknown' for unsupported rule, got %s", result.Status)
 	}
@@ -60,7 +60,7 @@ func TestResult_Valid(t *testing.T) {
 		Message: "Token is valid",
 		Account: "user123",
 	}
-	
+
 	if result.Status != "valid" {
 		t.Error("Valid result should have status 'valid'")
 	}
@@ -72,12 +72,12 @@ func TestResult_Valid(t *testing.T) {
 func TestResult_InvalidFormat(t *testing.T) {
 	// Test that various token formats are validated
 	v := NewVerifier()
-	
+
 	// Test GitHub token format detection
 	if !IsVerifiableRule("github-pat") {
 		t.Error("github-pat should be verifiable")
 	}
-	
+
 	// Test verification returns something (may be invalid, but shouldn't error)
 	_, err := v.Verify("github-pat", "invalid-token")
 	if err != nil {

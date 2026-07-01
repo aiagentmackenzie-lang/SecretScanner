@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/aiagentmackenzie-lang/SecretScanner/pkg/config"
+	"github.com/spf13/cobra"
 )
 
 func newRulesCommand() *cobra.Command {
@@ -30,7 +30,7 @@ func newRulesListCommand() *cobra.Command {
 			}
 
 			fmt.Printf("Available Detection Rules (%d total):\n\n", len(cfg.Rules))
-			
+
 			for _, rule := range cfg.Rules {
 				fmt.Printf("  • %s\n", rule.ID)
 				fmt.Printf("    Description: %s\n", rule.Description)

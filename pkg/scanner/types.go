@@ -110,11 +110,11 @@ type Options struct {
 
 // FileInfo represents information about a file being scanned
 type FileInfo struct {
-	Path       string
-	Size       int64
-	Content    []byte
-	IsBinary   bool
-	LineCount  int
+	Path      string
+	Size      int64
+	Content   []byte
+	IsBinary  bool
+	LineCount int
 }
 
 // IsText returns true if the file appears to be text

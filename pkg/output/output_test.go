@@ -77,7 +77,7 @@ func TestJSONFormatter_Redact(t *testing.T) {
 	}
 
 	output := buf.String()
-	
+
 	// Should not contain the full secret
 	if strings.Contains(output, "supersecretpassword") {
 		t.Error("Format() should redact secrets when Redact=true")
@@ -268,7 +268,7 @@ func TestSARIFFormatter_Format(t *testing.T) {
 	}
 
 	output := buf.String()
-	
+
 	// Should be valid JSON
 	var sarif map[string]interface{}
 	if err := json.Unmarshal([]byte(output), &sarif); err != nil {
@@ -320,7 +320,7 @@ func TestSARIFFormatter_Redact(t *testing.T) {
 
 func TestSARIFFormatter_severityToLevel(t *testing.T) {
 	tests := []struct {
-		severity string
+		severity  string
 		wantLevel string
 	}{
 		{"critical", "error"},

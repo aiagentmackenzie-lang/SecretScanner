@@ -10,7 +10,7 @@ func TestLoadFromFile(t *testing.T) {
 	// Create temp config file
 	tmpDir := t.TempDir()
 	configFile := filepath.Join(tmpDir, "test.toml")
-	
+
 	content := `
 title = "Test Config"
 
@@ -67,7 +67,7 @@ func TestLoadFromFile_NotExist(t *testing.T) {
 func TestLoadFromFile_InvalidFormat(t *testing.T) {
 	tmpDir := t.TempDir()
 	configFile := filepath.Join(tmpDir, "invalid.toml")
-	
+
 	content := "invalid toml content {{{"
 	os.WriteFile(configFile, []byte(content), 0644)
 

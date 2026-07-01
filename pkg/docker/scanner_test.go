@@ -12,7 +12,7 @@ func TestNewScanner(t *testing.T) {
 	cfg, _ := config.LoadDefault()
 	s := scanner.New(cfg, nil)
 	dockers := NewScanner(s, nil)
-	
+
 	if dockers == nil {
 		t.Fatal("NewScanner() returned nil")
 	}
@@ -28,7 +28,7 @@ func TestNewScanner_WithOptions(t *testing.T) {
 		MaxLayerSize: 100 * 1024 * 1024,
 		Verbose:      true,
 	}
-	
+
 	dockers := NewScanner(s, opts)
 	if dockers.options.MaxLayerSize != opts.MaxLayerSize {
 		t.Error("Options not set correctly")
@@ -65,14 +65,14 @@ func TestScanner_ScanTarball_Empty(t *testing.T) {
 	cfg, _ := config.LoadDefault()
 	s := scanner.New(cfg, nil)
 	d := NewScanner(s, nil)
-	
+
 	// Empty tarball
 	var buf bytes.Buffer
 	result, err := d.ScanTarball(&buf)
 	if err != nil {
 		t.Fatalf("ScanTarball() error = %v", err)
 	}
-	
+
 	if len(result.Findings) != 0 {
 		t.Errorf("Expected 0 findings from empty tarball, got %d", len(result.Findings))
 	}
@@ -84,7 +84,7 @@ func TestImageResult(t *testing.T) {
 		ImageID:       "sha256:abc123",
 		LayersScanned: 3,
 	}
-	
+
 	if result.ImageName != "test:latest" {
 		t.Error("ImageName not set correctly")
 	}

@@ -27,7 +27,7 @@ integration coming in v1.1.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			imageName := args[0]
-			
+
 			fmt.Fprintf(cmd.OutOrStdout(), "Scanning Docker image: %s\n", imageName)
 			fmt.Fprintln(cmd.OutOrStdout())
 			fmt.Fprintln(cmd.OutOrStdout(), "Docker daemon integration is not yet available.")
@@ -39,7 +39,7 @@ integration coming in v1.1.`,
 			fmt.Fprintln(cmd.OutOrStdout(), "     docker export CONTAINER > filesystem.tar")
 			fmt.Fprintln(cmd.OutOrStdout(), "     tar -xf filesystem.tar")
 			fmt.Fprintln(cmd.OutOrStdout(), "     secretscanner scan extracted/")
-			
+
 			return fmt.Errorf("docker daemon scanning not implemented in v1.0; use filesystem scanning on extracted images")
 		},
 	}

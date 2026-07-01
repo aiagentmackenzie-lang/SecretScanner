@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/aiagentmackenzie-lang/SecretScanner/pkg/config"
 	"github.com/aiagentmackenzie-lang/SecretScanner/pkg/output"
 	"github.com/aiagentmackenzie-lang/SecretScanner/pkg/scanner"
+	"github.com/spf13/cobra"
 )
 
 // ErrFindingsFound is returned when --fail-on-findings is set and secrets are found.
@@ -19,24 +19,24 @@ import (
 var ErrFindingsFound = errors.New("secrets found")
 
 type scanOptions struct {
-	sources         []string
-	configFile      string
-	format          string
-	output          string
-	severity        []string
-	failOnFindings  bool
-	staged          bool
-	fromCommit      string
-	toCommit        string
-	baseline        string
-	saveBaseline    string
-	maxFileSize     int64
-	threads         int
-	verbose         bool
-	redact          bool
-	verify          bool
-	verifyStatus    string
-	gitLogOpts      string
+	sources        []string
+	configFile     string
+	format         string
+	output         string
+	severity       []string
+	failOnFindings bool
+	staged         bool
+	fromCommit     string
+	toCommit       string
+	baseline       string
+	saveBaseline   string
+	maxFileSize    int64
+	threads        int
+	verbose        bool
+	redact         bool
+	verify         bool
+	verifyStatus   string
+	gitLogOpts     string
 }
 
 func newScanCommand() *cobra.Command {

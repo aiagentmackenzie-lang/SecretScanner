@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/aiagentmackenzie-lang/SecretScanner/pkg/verify"
+	"github.com/spf13/cobra"
 )
 
 type verifyOptions struct {
-	secret  string
+	secret   string
 	provider string
-	json    bool
+	json     bool
 }
 
 func newVerifyCommand() *cobra.Command {
@@ -45,9 +45,9 @@ func (o *verifyOptions) run(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("secret required: secretscanner verify [secret]")
 	}
-	
+
 	o.secret = args[0]
-	
+
 	// Determine provider from secret if not specified
 	if o.provider == "" {
 		o.provider = detectProvider(o.secret)
@@ -57,7 +57,7 @@ func (o *verifyOptions) run(cmd *cobra.Command, args []string) error {
 	}
 
 	v := verify.NewVerifier()
-	
+
 	// Map provider name to rule ID
 	ruleID := o.provider + "-pat"
 	switch o.provider {
@@ -96,7 +96,7 @@ func (o *verifyOptions) run(cmd *cobra.Command, args []string) error {
 	fmt.Printf("🔍 Verification Result\n")
 	fmt.Printf("Provider: %s\n", o.provider)
 	fmt.Printf("Status:   ")
-	
+
 	switch result.Status {
 	case "valid":
 		fmt.Printf("✅ VALID\n")

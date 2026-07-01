@@ -17,14 +17,14 @@ type SARIFFormatter struct {
 
 // SARIF root structure
 type sarifReport struct {
-	Schema  string         `json:"$schema"`
-	Version string         `json:"version"`
-	Runs    []sarifRun     `json:"runs"`
+	Schema  string     `json:"$schema"`
+	Version string     `json:"version"`
+	Runs    []sarifRun `json:"runs"`
 }
 
 type sarifRun struct {
-	Tool    sarifTool      `json:"tool"`
-	Results []sarifResult  `json:"results"`
+	Tool    sarifTool     `json:"tool"`
+	Results []sarifResult `json:"results"`
 }
 
 type sarifTool struct {
@@ -32,21 +32,21 @@ type sarifTool struct {
 }
 
 type sarifDriver struct {
-	Name            string          `json:"name"`
-	Version         string          `json:"version"`
-	InformationURI  string          `json:"informationUri"`
-	Rules           []sarifRule     `json:"rules"`
+	Name           string      `json:"name"`
+	Version        string      `json:"version"`
+	InformationURI string      `json:"informationUri"`
+	Rules          []sarifRule `json:"rules"`
 }
 
 type sarifRule struct {
-	ID               string              `json:"id"`
-	Name             string              `json:"name"`
-	ShortDescription sarifMessage        `json:"shortDescription"`
-	FullDescription  sarifMessage        `json:"fullDescription"`
+	ID                   string          `json:"id"`
+	Name                 string          `json:"name"`
+	ShortDescription     sarifMessage    `json:"shortDescription"`
+	FullDescription      sarifMessage    `json:"fullDescription"`
 	DefaultConfiguration sarifRuleConfig `json:"defaultConfiguration"`
-	Help             sarifMessage        `json:"help"`
-	HelpURI          string              `json:"helpUri"`
-	Properties       sarifRuleProps      `json:"properties"`
+	Help                 sarifMessage    `json:"help"`
+	HelpURI              string          `json:"helpUri"`
+	Properties           sarifRuleProps  `json:"properties"`
 }
 
 type sarifMessage struct {
@@ -58,16 +58,16 @@ type sarifRuleConfig struct {
 }
 
 type sarifRuleProps struct {
-	Precision         string   `json:"precision"`
-	SecuritySeverity    string   `json:"security-severity"`
-	Tags               []string `json:"tags"`
+	Precision        string   `json:"precision"`
+	SecuritySeverity string   `json:"security-severity"`
+	Tags             []string `json:"tags"`
 }
 
 type sarifResult struct {
-	RuleID    string         `json:"ruleId"`
-	Level     string         `json:"level"`
-	Message   sarifMessage   `json:"message"`
-	Locations []sarifLocation `json:"locations"`
+	RuleID              string            `json:"ruleId"`
+	Level               string            `json:"level"`
+	Message             sarifMessage      `json:"message"`
+	Locations           []sarifLocation   `json:"locations"`
 	PartialFingerprints sarifFingerprints `json:"partialFingerprints"`
 }
 
@@ -85,8 +85,8 @@ type sarifArtifact struct {
 }
 
 type sarifRegion struct {
-	StartLine   int    `json:"startLine"`
-	StartColumn int    `json:"startColumn"`
+	StartLine   int          `json:"startLine"`
+	StartColumn int          `json:"startColumn"`
 	Snippet     sarifMessage `json:"snippet,omitempty"`
 }
 
@@ -117,7 +117,7 @@ func (f *SARIFFormatter) Format(report *scanner.Report, w io.Writer) error {
 				Help: sarifMessage{
 					Text: finding.Description,
 				},
-				HelpURI:          fmt.Sprintf("https://github.com/aiagentmackenzie-lang/SecretScanner/blob/main/rules/%s.md", finding.RuleID),
+				HelpURI: fmt.Sprintf("https://github.com/aiagentmackenzie-lang/SecretScanner/blob/main/rules/%s.md", finding.RuleID),
 				Properties: sarifRuleProps{
 					Precision:        "high",
 					SecuritySeverity: severityToScore(finding.Severity),

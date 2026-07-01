@@ -10,9 +10,9 @@ import (
 
 // BaselineStore represents a stored baseline for diff comparison
 type BaselineStore struct {
-	Version      string            `json:"version"`
-	GeneratedAt  time.Time         `json:"generated_at"`
-	Findings     []BaselineFinding `json:"findings"`
+	Version     string            `json:"version"`
+	GeneratedAt time.Time         `json:"generated_at"`
+	Findings    []BaselineFinding `json:"findings"`
 }
 
 // BaselineFinding represents a finding stored in the baseline
@@ -120,9 +120,9 @@ func ComputeBaselineFingerprint(f *Finding) string {
 type Status int
 
 const (
-	StatusNew     Status = iota // Finding not in baseline
-	StatusExisting              // Finding in baseline (known issue)
-	StatusResolved              // Was in baseline but no longer found
+	StatusNew      Status = iota // Finding not in baseline
+	StatusExisting               // Finding in baseline (known issue)
+	StatusResolved               // Was in baseline but no longer found
 )
 
 // FindingStatus categorizes findings based on baseline comparison
@@ -188,11 +188,11 @@ func CompareWithBaseline(findings []*Finding, baseline *BaselineStore) []Finding
 
 // Statistics represents baseline comparison statistics
 type Statistics struct {
-	Total       int
-	New         int
-	Existing    int
-	Resolved    int
-	BySeverity  map[string]int
+	Total      int
+	New        int
+	Existing   int
+	Resolved   int
+	BySeverity map[string]int
 }
 
 // GetStatistics computes statistics from statuses
@@ -203,7 +203,7 @@ func GetStatistics(statuses []FindingStatus) Statistics {
 
 	for _, s := range statuses {
 		stats.Total++
-		
+
 		switch s.Status {
 		case StatusNew:
 			stats.New++

@@ -10,7 +10,7 @@ import (
 
 // Result represents the outcome of a verification
 type Result struct {
-	Status   string            `json:"status"`   // valid, invalid, revoked, error, unknown
+	Status   string            `json:"status"` // valid, invalid, revoked, error, unknown
 	Account  string            `json:"account,omitempty"`
 	Message  string            `json:"message,omitempty"`
 	Metadata map[string]string `json:"metadata,omitempty"`
@@ -281,17 +281,17 @@ func (v *Verifier) verifyAnthropic(key string) (*Result, error) {
 // IsVerifiableRule checks if a rule has verification support
 func IsVerifiableRule(ruleID string) bool {
 	verifiableRules := map[string]bool{
-		"github-pat":               true,
-		"github-fine-grained-pat":  true,
-		"github-oauth":             true,
-		"github-app-token":         true,
-		"slack-bot-token":          true,
-		"slack-user-token":         true,
-		"stripe-live-secret":       true,
-		"stripe-test-secret":       true,
-		"stripe-restricted-live":   true,
-		"openai-api-key":           true,
-		"anthropic-api-key":        true,
+		"github-pat":              true,
+		"github-fine-grained-pat": true,
+		"github-oauth":            true,
+		"github-app-token":        true,
+		"slack-bot-token":         true,
+		"slack-user-token":        true,
+		"stripe-live-secret":      true,
+		"stripe-test-secret":      true,
+		"stripe-restricted-live":  true,
+		"openai-api-key":          true,
+		"anthropic-api-key":       true,
 	}
 	return verifiableRules[ruleID]
 }

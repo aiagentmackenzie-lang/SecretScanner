@@ -8,22 +8,22 @@ import (
 	"strings"
 	"sync"
 
-	ahocorasick "github.com/cloudflare/ahocorasick"
 	"github.com/aiagentmackenzie-lang/SecretScanner/pkg/config"
 	"github.com/aiagentmackenzie-lang/SecretScanner/pkg/entropy"
+	ahocorasick "github.com/cloudflare/ahocorasick"
 )
 
 // Scanner is the main secret detection engine
 type Scanner struct {
-	config          *config.Config
-	options         *Options
-	ahocorasick     *ahocorasick.Matcher
-	keywords        map[string][]int // keyword -> rule indices
-	acPatterns      []string         // ordered list of unique keywords (AC dictionary order)
-	compiledREs     map[int]*regexp.Regexp
-	globalRegex     []*regexp.Regexp // pre-compiled global allowlist regexes
-	stats           Stats
-	statsMu         sync.Mutex
+	config      *config.Config
+	options     *Options
+	ahocorasick *ahocorasick.Matcher
+	keywords    map[string][]int // keyword -> rule indices
+	acPatterns  []string         // ordered list of unique keywords (AC dictionary order)
+	compiledREs map[int]*regexp.Regexp
+	globalRegex []*regexp.Regexp // pre-compiled global allowlist regexes
+	stats       Stats
+	statsMu     sync.Mutex
 }
 
 // Stats holds scanning statistics

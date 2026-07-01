@@ -105,7 +105,7 @@ func TestReport_Summary(t *testing.T) {
 	}
 
 	summary := report.Summary()
-	
+
 	if summary == "" {
 		t.Error("Summary() should not return empty string")
 	}

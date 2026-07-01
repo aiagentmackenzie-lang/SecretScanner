@@ -54,7 +54,7 @@ type JSONLFormatter struct {
 // Format outputs findings as JSONL
 func (f *JSONLFormatter) Format(report *scanner.Report, w io.Writer) error {
 	encoder := json.NewEncoder(w)
-	
+
 	for _, finding := range report.Findings {
 		var output *scanner.Finding
 		if f.Redact {
@@ -62,11 +62,11 @@ func (f *JSONLFormatter) Format(report *scanner.Report, w io.Writer) error {
 		} else {
 			output = finding
 		}
-		
+
 		if err := encoder.Encode(output); err != nil {
 			return err
 		}
 	}
-	
+
 	return nil
 }
